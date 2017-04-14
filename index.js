@@ -330,7 +330,7 @@ module.exports = function yarra(storage, progress){
     function withEachVerifiedStudy(func){
 	return (allVerifiedStudies()
 		.then((obj)=>{
-		    return (pEachSeries(obj.verifiedStudies, func));
+		    return (pEachSeries(obj.verifiedStudies, (pathToStudyJSON)=>(func(pathToStudyJSON,obj.dir))));
 		})
 	       );
     }
@@ -343,13 +343,13 @@ module.exports = function yarra(storage, progress){
      */
 
     function zipperTask(){
-	return (withEachVerifiedStudy((study)=>{
-	    return (zip(study)
-		    .then(()=>(deleteStudy(study)))
+	return (withEachVerifiedStudy((pathToStudyJSON, dir)=>{
+	    return (zip(pathToStudyJSON, dir)
+		    .then(()=>(deleteStudy(pathToStudyJSON)))
 		    .then(()=>{
-			console.log("zipped and deleted: "+study);
+			console.log("zipped and deleted: "+pathToStudyJSON);
 		    }, (e)=>{
-			console.log("error processing: "+study);
+			console.log("error processing: "+pathToStudyJSON);
 			console.log(e);
 		    })
 		   );
