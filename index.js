@@ -149,6 +149,7 @@ module.exports = function yarra(storage, progress){
      */
 
     function allTrue(conditions){
+	if (!(Array.isArray(conditions))) return false;
 	let i = conditions.length;
 	let c = true;
 	while ( (c) && (i-->0) ){
@@ -174,6 +175,8 @@ module.exports = function yarra(storage, progress){
 	return (dlJSON(buckets.sim,pathToStudyJSON)
 		.then(show)
 		.then(function(study){
+		    if (!(Array.isArray(study.configurations)) || !(study.configurations.length))
+			throw new Error("zero configurations configured for study: "+pathToStudyJSON);
 		    [].push.apply(md5jsonfiles,Study.paths(pathToStudyJSON,study.configurations.length,"md5.json"));
 		    return allExist(md5jsonfiles, dir);
 		})
@@ -199,6 +202,19 @@ module.exports = function yarra(storage, progress){
 
     closure.verifyStudy = verifyStudy;
 
+    function metaSummary({study, pathToStudyJSON, dir}){
+	if (study)
+	    return Study.metaSummary(study);
+	if (
+	    (dir) && (dir[pathToStudyJSON]) &&
+		(dir[pathToStudyJSON].metadata) &&
+		(dir[pathToStudyJSON].metadata.metadata) &&
+		(dir[pathToStudyJSON].metadata.metadata.numberOfConfigurations)
+	) return dir[pathToStudyJSON].metadata.metadata;
+	if (pathToStudyJSON)
+	    return dlJSON(buckets.sim, pathToStudyJSON).then((study)=>(Study.metaSummary(study)));
+    }
+
     /**
      * creates a .zip copy of a study 
      *  copies from buckets.sim directory with pathToStudyJSON and all subdirs
@@ -208,14 +224,16 @@ module.exports = function yarra(storage, progress){
      * @return {Promise<Object>} a promise that resolves to the results of the zipBucket call, see npm:zip-bucket
      */
 
-    function zip(pathToStudyJSON){
+    function zip(pathToStudyJSON, dir){
 	return (vaporlock(buckets.lock, pathToStudyJSON)
-		.then(()=>(zipBucket({
+		.then(()=>(metaSummary({pathToStudyJSON,dir})))
+		.then((metadata)=>(zipBucket({
 		    fromBucket: buckets.sim,
 		    fromPath: pathToStudyJSON.replace("config.json",""),
 		    toBucket: buckets.study,
 		    toPath: pathToStudyJSON.replace("/config.json",".zip"),
-		    progress
+		    progress,
+		    metadata
 		})))
 	       );
     }
@@ -234,6 +252,17 @@ module.exports = function yarra(storage, progress){
     }
 
     closure.studies = studies;
+
+    function withEachStudy(path, func){
+	if (typeof(path)!=='string') throw new Error("expected path to be string, got: "+typeof(path));
+	if (typeof(func)!=='function') throw new Error("expected func to be function, got: "+typeof(func));
+	return (ls(buckets.sim, path)
+		.then(studies)
+		.then((obj)=>{
+		    return pEachSeries(obj.studies, ((study)=>(func(study, obj.dir))));
+		})
+	       );
+    }
 
     /**
      * passes the input object and adds a property verifiedStudies containing all studies that pass the existence/md5 tests
@@ -298,31 +327,61 @@ module.exports = function yarra(storage, progress){
 
     closure.deleteStudy = deleteStudy;
 
+    function withEachVerifiedStudy(func){
+	return (allVerifiedStudies()
+		.then((obj)=>{
+		    return (pEachSeries(obj.verifiedStudies, func));
+		})
+	       );
+    }
+
+    closure.withEachVerifiedStudy = withEachVerifiedStudy;
+
     /** runs a single pass of zipperTask.  Scans for verifiedStudies in buckets.sim, zips to buckets.study, deleteds.
      *
      * @return {Promise}
      */
 
     function zipperTask(){
-	return (allVerifiedStudies()
-		.then((obj)=>{
-		    return (pEachSeries(obj.verifiedStudies, (study)=>{
-			return (zip(study)
-				.then(()=>(deleteStudy(study)))
-				.then(()=>{
-				    console.log("zipped and deleted: "+study);
-				}, (e)=>{
-				    console.log("error processing: "+study);
-				    console.log(e);
-				})
-			       );
+	return (withEachVerifiedStudy((study)=>{
+	    return (zip(study)
+		    .then(()=>(deleteStudy(study)))
+		    .then(()=>{
+			console.log("zipped and deleted: "+study);
+		    }, (e)=>{
+			console.log("error processing: "+study);
+			console.log(e);
 		    })
-			   );
-		})
+		   );
+	})
 	       );
     }
 
     closure.zipperTask = zipperTask;
+
+    /**
+     * returns a Promise resolving to [ 
+     *   {study: path, completed (true|false), title, numberOfConfigurations, configurations, unfinished, unverified, percent: number, updated: Date, errors: []} 
+     * , ... ]
+     *
+     * @param {string} path
+     * @return {Promise<object[]>} array of objects
+     */
+
+/* work in progress 
+    
+    function completionStatus(path){
+	const status = [];
+	const zipdir = {};
+	return (ls(buckets.study)
+		.then((zippy)=>{ Object.assign(zipdir, zippy); })
+		.then(()=>{
+		    return (withEachStudy(path, (study, lsdir)=>{
+			
+		    }).then(()=>(status)));	
+		}
+		      
+*/
 
     return closure;
 
