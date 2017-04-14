@@ -1,5 +1,5 @@
 /* Copyright (C) 2017 Paul Brewer Economic and Financial Technology Consulting LLC <drpaulbrewer@eaftc.com> */
-/* All Rights Reserved */
+/* License: The MIT License */
 /* jshint esnext:true,eqeqeq:true,undef:true,lastsemic:true,strict:true,unused:true,node:true */
 
 "use strict";
