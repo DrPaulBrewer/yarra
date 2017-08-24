@@ -1,6 +1,6 @@
 {
   "name": "yarra",
-  "version": "0.2.1",
+  "version": "0.3.0",
   "description": "Yet Another Robotic Research Assistant for single-market-robot-simulator studies",
   "main": "index.js",
   "author": "drpaulbrewer@eaftc.com",
