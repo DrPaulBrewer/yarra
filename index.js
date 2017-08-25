@@ -382,8 +382,8 @@ module.exports = function yarra(storage, progress){
 		    {},
 		    {path: pathToStudyJSON},
 		    lsdir[pathToStudyJSON].metadata.metadata,
-		    missingSim: missing(lsdir, pathToStudyJSON, +numberOfConfigurations, "sim.json"),
-		    unfinished: missing(lsdir, pathToStudyJSON, +numberOfConfigurations, "md5.json"),
+		    {missingSim: missing(lsdir, pathToStudyJSON, +numberOfConfigurations, "sim.json")},
+		    {unfinished: missing(lsdir, pathToStudyJSON, +numberOfConfigurations, "md5.json")},
 		    {created: lsdir[pathToStudyJSON].metadata.timeCreated}
 		)
 	    );
