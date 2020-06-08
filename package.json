@@ -12,6 +12,6 @@
     "single-market-robot-simulator-study": "^1.2.1",
     "vaporlock": "^0.2.6",
     "verify-bucket-md5": "^0.4.0",
-    "zip-bucket": "^0.5.4"
+    "zip-bucket": "^0.7.0"
   }
 }
