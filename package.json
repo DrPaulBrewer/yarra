@@ -6,7 +6,7 @@
   "author": "drpaulbrewer@eaftc.com",
   "license": "MIT",
   "dependencies": {
-    "@google-cloud/storage": "^1.2.1",
+    "@google-cloud/storage": "^5.17.0",
     "p-each-series": "^1.0.0",
     "promise-retry": "^1.1.1",
     "single-market-robot-simulator-study": "^1.2.1",
